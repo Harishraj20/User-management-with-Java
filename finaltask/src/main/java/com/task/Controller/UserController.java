@@ -1,5 +1,7 @@
 package com.task.Controller;
 
+import java.util.List;
+
 import javax.servlet.http.HttpSession;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,8 +13,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.task.Model.User;
 import com.task.Service.UserService;
 
 @Controller
@@ -139,6 +143,18 @@ public class UserController {
             return "ChangePassword";
 
         }
+    }
+    @GetMapping("users/search")
+    public String viewSearchPage() {
+        return "search";
+    }
+    
+    @GetMapping("users/searchResults/{query}")
+    @ResponseBody
+    public List<User> searchResults(@PathVariable String query) {
+        logger.info("Request to search user by name");
+        return service.getBySearch(query);
+
     }
 
 }

@@ -269,4 +269,26 @@ public class UserRepository {
         }
     }
 
+    public List<User> searchResults(String val) {
+        logger.info("Inside repository search Method");
+        try {
+            Session session = sessionFactory.getCurrentSession();
+
+            Criteria criteria = session.createCriteria(User.class);
+
+            criteria.add(Restrictions.ilike("userName", "%" + val + "%"));
+
+            List<User> users = criteria.list();
+
+            return users;
+
+        } catch (HibernateException e) {
+            logger.error("Hibernate Exception while fetching users for search Field");
+            return null;
+        } catch (Exception e) {
+            logger.error("Exception while fetching users for search Field");
+            return null;
+        }
+    }
+
 }

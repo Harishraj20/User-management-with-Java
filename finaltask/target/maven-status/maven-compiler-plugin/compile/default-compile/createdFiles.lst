@@ -1,0 +1,7 @@
+com\task\Repository\UserRepository.class
+com\task\Model\User.class
+com\task\Model\Login.class
+com\task\Controller\CrudController.class
+com\task\Service\UserService.class
+com\task\Filters\AuthenticationFilter.class
+com\task\Controller\UserController.class

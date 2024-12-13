@@ -2,6 +2,8 @@ package com.task.Model;
 
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class User {
 
     private int userId;
@@ -15,6 +17,7 @@ public class User {
     private String gender;
     private int loginStatus = 0;
 
+    @JsonIgnore
     private Set<Login> logins;
 
     public User() {

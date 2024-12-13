@@ -221,4 +221,8 @@ public class UserService {
             return false;
         }
     }
+    public  List<User> getBySearch(String field) {
+        logger.info("Requesting service to interact with database");
+        return repo.searchResults(field);
+    }
 }
