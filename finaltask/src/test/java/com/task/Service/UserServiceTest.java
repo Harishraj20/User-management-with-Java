@@ -47,7 +47,7 @@ public class UserServiceTest {
 
     @InjectMocks
     private UserService userService;
-
+// vtc g
     private User testUser;
     private User loginUser;
     private User mockUser;
@@ -56,7 +56,6 @@ public class UserServiceTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
 
-      
         when(session.getAttribute("LoginUser")).thenReturn(mockUser);
 
         testUser = new User("Arvind Kumar", "Aravind@1", "arvind.kumar@gmail.com",
@@ -71,7 +70,6 @@ public class UserServiceTest {
 
     @Test
     public void testAddUser_Success() {
-
         when(userRepository.checkUserByEmailid(testUser.getEmailId())).thenReturn(null);
         when(userRepository.addUserInfo(testUser)).thenReturn(true);
 
@@ -165,7 +163,7 @@ public class UserServiceTest {
 
         when(userRepository.findUser(userId)).thenReturn(null);
 
-        boolean result = userService.deleteUserById(userId);
+        boolean result = userService.deleteUserById(1);
 
         assertFalse(result);
         verify(userRepository, never()).deleteUser(userId);
@@ -366,8 +364,7 @@ public class UserServiceTest {
         String password = "password123";
         User mockUser = new User();
         mockUser.setEmailId(emailId);
-        mockUser.setPassword("$2a$12$DiSPl3FcQlKWVuFR.2MCMuA7O/bKr.kgrH35w1BB8pGeJoRnbfUVC"); 
-                                                                                              
+        mockUser.setPassword("$2a$12$DiSPl3FcQlKWVuFR.2MCMuA7O/bKr.kgrH35w1BB8pGeJoRnbfUVC");
 
         when(userRepository.checkUserByEmailid(emailId)).thenReturn(mockUser);
         when(passwordEncoder.matches(password, mockUser.getPassword())).thenReturn(true);
@@ -436,5 +433,18 @@ public class UserServiceTest {
         verify(userRepository).updateUser(mockUser);
     }
 
+    @Test
+    public void testgetBySearch() {
+
+        List<User> mockUsers = Arrays.asList(testUser);
+
+        when(userRepository.searchResults("vin")).thenReturn(mockUsers);
+
+        List<User> result = userService.getBySearch("vin");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Arvind Kumar", result.get(0).getUserName());
+    }
 
 }

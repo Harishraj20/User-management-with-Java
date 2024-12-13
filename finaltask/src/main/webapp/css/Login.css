@@ -16,8 +16,8 @@ body {
 }
 
 .holder {
-  width: 60%;
-  height: 40%;
+  width: 35%;
+  height: 43%;
   background-color: #ffffff;
   padding: 2rem;
   border-radius: 12px;
@@ -51,7 +51,6 @@ body {
 
 form {
   width: 100%;
-
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -115,7 +114,7 @@ input[type="submit"],
 input[type="reset"] {
   width: 95%;
   height: 100%;
-  padding: 12px;
+  padding: 10px;
   font-size: larger;
   color: #ffffff;
   border: none;
@@ -197,8 +196,6 @@ input[type="reset"] {
   .error-msg {
     font-size: inherit;
   }
-
-
 }
 
 @media (min-width: 481px) and (max-width: 860px) {
@@ -242,8 +239,6 @@ input[type="reset"] {
   .form-container {
     height: 60%;
   }
-
-
 }
 
 @media (min-width: 861px) and (max-width: 1000px) {

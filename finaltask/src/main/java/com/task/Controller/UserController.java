@@ -144,11 +144,12 @@ public class UserController {
 
         }
     }
+
     @GetMapping("users/search")
     public String viewSearchPage() {
-        return "search";
+        return "searchPage";
     }
-    
+
     @GetMapping("users/searchResults/{query}")
     @ResponseBody
     public List<User> searchResults(@PathVariable String query) {

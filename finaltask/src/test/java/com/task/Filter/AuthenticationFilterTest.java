@@ -11,6 +11,7 @@ import javax.servlet.http.HttpSession;
 
 import org.junit.Before;
 import org.junit.Test;
+import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.Mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -66,7 +67,7 @@ public class AuthenticationFilterTest {
         authenticationFilter.doFilter(request, response, chain);
 
         verify(chain).doFilter(request, response);
-        verify(response, never()).sendRedirect("/users");
+        verify(response, never()).sendRedirect(anyString());
     }
 
     @Test

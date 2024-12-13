@@ -96,6 +96,7 @@ public class RepositoryTest {
     public void testSaveLoginInfo_Success() {
         userRepository.saveLoginInfo(login);
 
+        verify(sessionFactory, times(1)).getCurrentSession();
         verify(session, times(1)).save(login);
     }
 
@@ -193,6 +194,7 @@ public class RepositoryTest {
         doNothing().when(session).delete(user);
 
         userRepository.deleteUser(userId);
+        verify(session, times(1)).get(User.class, userId);
         verify(session, times(1)).delete(user);
     }
 
@@ -203,7 +205,7 @@ public class RepositoryTest {
         when(session.get(User.class, userId)).thenReturn(null);
         userRepository.deleteUser(userId);
         verify(session, times(1)).get(User.class, userId);
-        verify(session, times(0)).delete(userId);
+        verify(session, times(0)).delete(any());
     }
 
     @Test
@@ -556,6 +558,39 @@ public class RepositoryTest {
         when(criteria.uniqueResult()).thenReturn(expectedCount);
         int result = userRepository.countInactiveUsers();
         assertEquals(0, result);
+    }
+
+    @Test
+    public void testSearchResults_Success() {
+
+        List<User> mockUsers = Arrays.asList(testUser);
+
+        when(criteria.add(any())).thenReturn(criteria);
+        when(criteria.list()).thenReturn(mockUsers);
+
+        List<User> result = userRepository.searchResults("vin");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Arvind Kumar", result.get(0).getUserName());
+    }
+
+    @Test
+    public void testSearchResults_HibernateException() {
+        when(sessionFactory.getCurrentSession()).thenThrow(new HibernateException("Hibernate error"));
+
+        List<User> result = userRepository.searchResults("vin");
+
+        assertNull(result);
+    }
+
+    @Test
+    public void testSearchResults_GenericException() {
+        when(sessionFactory.getCurrentSession()).thenThrow(new RuntimeException("Generic error"));
+
+        List<User> result = userRepository.searchResults("vin");
+
+        assertNull(result);
     }
 
 }
