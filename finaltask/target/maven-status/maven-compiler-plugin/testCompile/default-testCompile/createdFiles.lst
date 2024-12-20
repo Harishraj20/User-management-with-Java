@@ -1,0 +1,8 @@
+com\task\Controller\CrudControllerTest.class
+com\task\Service\MyUserDetailsServiceTest.class
+com\task\Security\JwtAuthenticationFilterTest.class
+com\task\Repository\RepositoryTest.class
+com\task\Security\LogoutHandlerCookieTest.class
+com\task\Controller\UserControllerTest.class
+com\task\Service\UserServiceTest.class
+com\task\Service\JwtServiceTest.class

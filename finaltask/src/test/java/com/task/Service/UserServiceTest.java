@@ -1,9 +1,12 @@
 package com.task.Service;
 
+import com.task.Model.UserPrincipal;
+
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import static org.junit.Assert.assertEquals;
@@ -13,9 +16,13 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
@@ -25,12 +32,17 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.ui.Model;
 
 import com.task.Model.Login;
 import com.task.Model.User;
 import com.task.Repository.UserRepository;
+import com.task.Security.JwtService;
 
 public class UserServiceTest {
 
@@ -41,7 +53,20 @@ public class UserServiceTest {
     private HttpSession session;
 
     @Mock
+    private AuthenticationManager authenticationManager;
+
+    @Mock
+    private JwtService jwtService;
+
+    @Mock
+    private HttpServletResponse response;
+
+    @Mock
+    private Authentication authentication;
+
+    @Mock
     private Model model;
+
     @Mock
     private PasswordEncoder passwordEncoder;
 
@@ -51,6 +76,8 @@ public class UserServiceTest {
     private User testUser;
     private User loginUser;
     private User mockUser;
+    String token;
+    UserPrincipal userPrincipal;
 
     @Before
     public void setUp() {
@@ -65,7 +92,67 @@ public class UserServiceTest {
 
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         when(userRepository.checkUserByEmailid(testUser.getEmailId())).thenReturn(testUser);
+        token = "jwtToken";
+        userPrincipal = new UserPrincipal(loginUser);
 
+    }
+
+    @Test
+    public void testJwtService() {
+        assertNotNull(jwtService);
+    }
+
+    @Test
+    public void testAuthenticateUser_Success() {
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getPrincipal()).thenReturn(userPrincipal);
+        when(jwtService.generateToken(loginUser.getEmailId())).thenReturn(token);
+
+        boolean result = userService.authenticateUser(loginUser.getEmailId(), loginUser.getPassword(), session, response);
+
+        assertTrue(result);
+
+        verify(session).setAttribute(eq("LoginUser"), eq(loginUser));
+        verify(response).addCookie(argThat(cookie
+                -> "jwtToken".equals(cookie.getName())
+                && token.equals(cookie.getValue())
+                && "/finaltask".equals(cookie.getPath())
+                && cookie.isHttpOnly()
+        ));
+    }
+
+    @Test
+    public void testAuthenticateUser_Exception() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenThrow(new RuntimeException("Invalid credentials"));
+
+        boolean result = userService.authenticateUser(loginUser.getEmailId(), loginUser.getPassword(), session, response);
+        assertFalse(result);
+
+    }
+
+    @Test
+    public void testAuthenticateUser_BadCredentialException() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).
+                thenThrow(new BadCredentialsException("Invalid credentials"));
+
+        boolean result = userService.authenticateUser(loginUser.getEmailId(), loginUser.getPassword(), session, response);
+        assertFalse(result);
+
+    }
+
+    @Test
+    public void testAuthenticateUser_elseCase() {
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(false);
+
+        boolean result = userService.authenticateUser(loginUser.getEmailId(), loginUser.getPassword(), session, response);
+
+        assertFalse(result);
     }
 
     @Test
@@ -205,14 +292,17 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testAuthenticateUser_Failure_InvalidPassword() {
-        when(userRepository.checkUserByEmailid(testUser.getEmailId())).thenReturn(testUser);
+    public void test_authenticateUser() {
 
-        boolean result = userService.authenticateUser(testUser.getEmailId(), "Aravind@1", session);
-        assertFalse(result);
-        verify(session, times(0)).setAttribute("LoginUser", testUser);
     }
 
+    // @Test
+    // public void testAuthenticateUser_Failure_InvalidPassword() {
+    //     when(userRepository.checkUserByEmailid(testUser.getEmailId())).thenReturn(testUser);
+    //     boolean result = userService.authenticateUser(testUser.getEmailId(), "Aravind@1", session);
+    //     assertFalse(result);
+    //     verify(session, times(0)).setAttribute("LoginUser", testUser);
+    // }
     @Test
     public void testUpdateUser_Success() {
 
@@ -262,7 +352,7 @@ public class UserServiceTest {
         List<User> paginatedUsers = Arrays.asList(testUser);
         when(userRepository.fetchUsersWithPagination(0, 10)).thenReturn(paginatedUsers);
         when(userRepository.countTotalUsers()).thenReturn(50);
-        userService.prepareUserPage(1, 10, session, model);
+        userService.prepareUserPage(1, 10, model);
 
         verify(model, times(1)).addAttribute("UserList", paginatedUsers);
         verify(model, times(1)).addAttribute("currentPage", 1);
@@ -343,51 +433,6 @@ public class UserServiceTest {
         verify(userRepository, times(1)).findUser(paramId);
         verify(userRepository, never()).updateUser(any(User.class));
     }
-
-    @Test
-    public void testAuthenticateUser_WhenUserNotFoundOrPasswordDoesNotMatch() {
-        String emailId = "Harish@google.com";
-        String password = "Harsh@1";
-
-        when(userRepository.checkUserByEmailid(emailId)).thenReturn(null);
-
-        boolean result = userService.authenticateUser(emailId, password, session);
-
-        assertFalse(result);
-        verify(session, never()).setAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testAuthenticateUser_Success() {
-
-        String emailId = "harish@gmail.com";
-        String password = "password123";
-        User mockUser = new User();
-        mockUser.setEmailId(emailId);
-        mockUser.setPassword("$2a$12$DiSPl3FcQlKWVuFR.2MCMuA7O/bKr.kgrH35w1BB8pGeJoRnbfUVC");
-
-        when(userRepository.checkUserByEmailid(emailId)).thenReturn(mockUser);
-        when(passwordEncoder.matches(password, mockUser.getPassword())).thenReturn(true);
-
-        boolean result = userService.authenticateUser(emailId, password, session);
-
-        assertTrue(result, "Authentication should succeed for valid credentials");
-        verify(session).setAttribute("LoginUser", mockUser);
-    }
-
-    @Test
-    public void testAuthenticateUser_Failure_UserNotFound() {
-        String emailId = "nonexistent@example.com";
-        String password = "password123";
-
-        when(userRepository.checkUserByEmailid(emailId)).thenReturn(null);
-
-        boolean result = userService.authenticateUser(emailId, password, session);
-
-        assertFalse(result, "Authentication should fail when user is not found");
-        verify(session, never()).setAttribute(anyString(), any());
-    }
-
     @Test
     public void testUpdateUserPassword_Failure_OldPasswordMismatch() {
         String oldPassword = "incorrectOldPassword";

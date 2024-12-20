@@ -3,18 +3,26 @@ package com.task.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
 import com.task.Model.Login;
 import com.task.Model.User;
+import com.task.Model.UserPrincipal;
 import com.task.Repository.UserRepository;
+import com.task.Security.JwtService;
 
 @Service
 public class UserService {
@@ -22,41 +30,72 @@ public class UserService {
     private final UserRepository repo;
 
     @Autowired
-    public UserService(UserRepository repo) {
+    public UserService(UserRepository repo, AuthenticationManager authenticationManager, JwtService jwtService) {
         this.repo = repo;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
+
+    private final AuthenticationManager authenticationManager;
+
+    private final JwtService jwtService;
 
     BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private static final Logger logger = LogManager.getLogger();
+    String token;
 
-//Authentication of User
-    public boolean authenticateUser(String emailId, String password, HttpSession session) {
-        logger.info("Attempting authentication for user with emailId: {}", emailId);
-        logger.info("Checking user with emailId: {}", emailId);
+    //Authentication of User
+    public boolean authenticateUser(String emailId, String password, HttpSession session, HttpServletResponse response) {
+        logger.info("Authenticate reaches service method!");
 
-        User user = repo.checkUserByEmailid(emailId);
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(emailId, password)
+            );
 
-        if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            updateCredentials(user);
-            session.setAttribute("LoginUser", user);
+            if (authentication.isAuthenticated()) {
+                logger.info("User authenticated successfully!");
+                UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+                User user = userPrincipal.getUser(); //Returns the user object
 
-            logger.info("User with emailId: {} authenticated successfully", emailId);
-            return true;
-        } else {
-            logger.warn("Authentication failed for user with emailId: {}", emailId);
+                System.out.println("User details: " + user);
+
+                session.setAttribute("LoginUser", user);
+                updateCredentials(user);
+                token = jwtService.generateToken(emailId);
+                logger.info("Token Generated on successful Login: {}", token);
+
+                Cookie jwtCookie = new Cookie("jwtToken", token);
+                jwtCookie.setHttpOnly(true);
+                jwtCookie.setPath("/finaltask");
+                response.addCookie(jwtCookie);
+
+                return true;
+            } else {
+                logger.info("Authentication failed!");
+                return false;
+            }
+
+        } catch (BadCredentialsException e) {
+            logger.error("Bad credentials error: Invalid email or password!");
+            return false;
+        } catch (Exception e) {
+            logger.error("Error during authentication: " + e.getMessage());
             return false;
         }
     }
 
     //UserPage with pagnation
-    public void prepareUserPage(int pageNumber, int pageSize, HttpSession session, Model model) {
+    public void prepareUserPage(int pageNumber, int pageSize, Model model) {
 
         logger.info("Preparing user page for page number: {} with page size: {}", pageNumber, pageSize);
 
         int offset = (pageNumber - 1) * pageSize;
 
         List<User> paginatedUsers = repo.fetchUsersWithPagination(offset, pageSize);
+        String mailId = jwtService.extractUsername(token);
+        logger.info("The extracted email id from the jwt token is: {} ", mailId);
 
         int totalUsers = repo.countTotalUsers();
 
@@ -64,6 +103,8 @@ public class UserService {
         model.addAttribute("UserList", paginatedUsers);
         model.addAttribute("currentPage", pageNumber);
         model.addAttribute("totalPages", totalPages);
+        model.addAttribute("loggedInUser",repo.checkUserByEmailid(mailId));
+        logger.info("Retrieved user info from token mail Id: {}",model.getAttribute("loggedInUser"));
 
         logger.info("User page prepared with total users: {} and total pages: {}", totalUsers, totalPages);
     }
@@ -225,5 +266,10 @@ public class UserService {
     public List<User> getBySearch(String field) {
         logger.info("Requesting service to interact with database");
         return repo.searchResults(field);
+    }
+
+    public User findUser(String emailId) {
+        logger.info("inside find user method to return loggedIn user info!");
+        return repo.checkUserByEmailid(emailId);
     }
 }

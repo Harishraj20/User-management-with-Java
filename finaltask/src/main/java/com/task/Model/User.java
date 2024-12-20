@@ -117,4 +117,11 @@ public class User {
     public void setGender(String gender) {
         this.gender = gender;
     }
+
+    @Override
+    public String toString() {
+        return "User [userId=" + userId + ", userName=" + userName + ", password=" + password + ", emailId=" + emailId
+                + ", dob=" + dob + ", designation=" + designation + ", role=" + role + ", gender=" + gender
+                + ", loginStatus=" + loginStatus + "]";
+    }
 }

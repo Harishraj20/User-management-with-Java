@@ -4,7 +4,7 @@
         <Console name="console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
         </Console>
-        <File name="File" fileName="C:/Users/Hp/Desktop/task2/finaltask/src/logs/application.log"
+        <File name="File" fileName="C:/Users/Hp/Desktop/GitHub/User-management-with-Java/finaltask/src/logs/application.log"
             append="false">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n" />
         </File>

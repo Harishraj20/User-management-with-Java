@@ -20,13 +20,15 @@
         Kindly Log in again with your new password.
         You will be automatically redirected to the Home page in 10 seconds....
       </p>
-      <p class="redirect-message" style="margin-top: 2%; font-size: large; height:30%;">If you are not redirected automatically,
-        please <a href="/finaltask">click here</a> to go to the Home page.</p>
+      <p class="redirect-message" style="margin-top: 2%; font-size: large; height:30%;">If you are not redirected
+        automatically,
+        please <a href="/finaltask/users/logout">click here</a> to go to the Home page.</p>
     </div>
 
     <script type="text/javascript">
       setTimeout(function () {
-        window.location.href = "/finaltask";
+
+        window.location.href = "/finaltask/users/logout"; //Bypassing to logout end point so that spring will handle this logout on changing password! Previously used /finaltask/login which do logout so token remains in the cookie!!
       }, 10000); 
     </script>
     </body>

@@ -3,6 +3,7 @@ package com.task.Controller;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.junit.Before;
@@ -31,7 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.ui.Model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.task.Model.User;
 import com.task.Service.UserService;
 
@@ -48,18 +48,18 @@ public class UserControllerTest {
     @Mock
     private Model model;
 
+    @Mock
+    HttpServletResponse response;
+
     private User testUser;
     private User loginUser;
 
     private MockMvc mockMvc;
 
-    private ObjectMapper objectMapper;
-
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         userController = new UserController(userService);
-        objectMapper = new ObjectMapper();
         mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
         testUser = new User("Arvind Kumar", "Aravind@1", "arvind.kumar@gmail.com",
                 "1992-12-10", "Software Engineer", "Admin", 1, "Male");
@@ -69,15 +69,22 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testHomepage() throws Exception {
-        mockMvc.perform(get("/"))
+    public void testLoginPage_withMessage() throws Exception {
+        mockMvc.perform(get("/login").param("message", "Invalid credentials"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("Login"));
+    }
+
+    @Test
+    public void testLoginPage_ifCase() throws Exception {
+        mockMvc.perform(get("/login").param("message", (String) null))
                 .andExpect(status().isOk())
                 .andExpect(view().name("Login"));
     }
 
     @Test
     public void testLoginUser_Success() throws Exception {
-        when(userService.authenticateUser(eq("Harish@gmail.com"), eq("Harish@1"), any(HttpSession.class)))
+        when(userService.authenticateUser(eq("Harish@gmail.com"), eq("Harish@1"), any(HttpSession.class), any(HttpServletResponse.class)))
                 .thenReturn(true);
 
         mockMvc.perform(post("/login")
@@ -86,30 +93,22 @@ public class UserControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/users"));
 
-        verify(userService, times(1)).authenticateUser(eq("Harish@gmail.com"), eq("Harish@1"), any(HttpSession.class));
+        verify(userService, times(1)).authenticateUser(eq("Harish@gmail.com"), eq("Harish@1"), any(HttpSession.class), any(HttpServletResponse.class));
     }
 
     @Test
     public void testLoginUser_Failure() throws Exception {
-        when(userService.authenticateUser(eq("Harish@gmail.com"), eq("Harish@1"), any(HttpSession.class)))
+        when(userService.authenticateUser(eq("Harish@gmail.com"), eq("Harish@1"), any(HttpSession.class), any(HttpServletResponse.class)))
                 .thenReturn(false);
 
         mockMvc.perform(post("/login")
                 .param("emailId", "Harish@gmail.com")
                 .param("password", "Harish@1"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"))
+                .andExpect(redirectedUrl("/login"))
                 .andExpect(flash().attributeExists("message"));
 
-        verify(userService, times(1)).authenticateUser(eq("Harish@gmail.com"), eq("Harish@1"), any(HttpSession.class));
-    }
-
-    @Test
-    public void testLogout() throws Exception {
-        mockMvc.perform(get("/logout"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"));
-
+        verify(userService, times(1)).authenticateUser(eq("Harish@gmail.com"), eq("Harish@1"), any(HttpSession.class), any(HttpServletResponse.class));
     }
 
     @Test
@@ -161,7 +160,7 @@ public class UserControllerTest {
                 .andExpect(view().name("Details"));
 
         verify(userService, times(1))
-                .prepareUserPage(eq(1), eq(10), any(HttpSession.class), any(Model.class));
+                .prepareUserPage(eq(1), eq(10), any(Model.class));
     }
 
     @Test
@@ -198,6 +197,7 @@ public class UserControllerTest {
         List<User> mockUsers = Arrays.asList(loginUser, testUser);
 
         when(userService.getBySearch("john")).thenReturn(mockUsers);
-        mockMvc.perform(MockMvcRequestBuilders.get("/users/searchResults/john").accept(MediaType.APPLICATION_JSON_UTF8)).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8)); }
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/searchResults/john").accept(MediaType.APPLICATION_JSON_UTF8)).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8));
+    }
 
 }

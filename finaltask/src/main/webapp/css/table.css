@@ -286,6 +286,10 @@ display-user p,
   .addUser-btn.admin {
     width: 97%;
   }
+  .add-btn {
+    font-size: medium;
+
+}
 
   .addUser-btn.viewer {
     width: 97%;
@@ -322,9 +326,11 @@ display-user p,
   .add-btn {
     font-size: 18px;
   }
+  .data-error {
+    height: 5%;}
 
   .addUser-btn {
-    width: 55%;
+    width: 80%;
     padding: 15px;
   }
 

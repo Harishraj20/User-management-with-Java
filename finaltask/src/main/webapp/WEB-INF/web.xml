@@ -2,16 +2,22 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
+
+
+  <!-- If we want spring to manage the authentication we can set up in web.xml and other
+  configurations are same  -->
+
+
   <filter>
-    <filter-name>authenticationFilter</filter-name>
-    <filter-class>com.task.Filters.AuthenticationFilter</filter-class>
+    <filter-name>springSecurityFilterChain</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
   </filter>
 
   <filter-mapping>
-    <filter-name>authenticationFilter</filter-name>
+    <filter-name>springSecurityFilterChain</filter-name>
     <url-pattern>/users/*</url-pattern>
   </filter-mapping>
-
+  
   <servlet>
     <servlet-name>RequestServlet</servlet-name>
     <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>

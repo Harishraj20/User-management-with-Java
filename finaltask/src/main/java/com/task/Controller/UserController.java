@@ -2,6 +2,7 @@ package com.task.Controller;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.logging.log4j.LogManager;
@@ -27,36 +28,37 @@ public class UserController {
     @Autowired
     public UserController(UserService service) {
         this.service = service;
+
     }
 
     protected static final Logger logger = LogManager.getLogger();
 
-    @GetMapping("/")
-    public String homepage() {
-        logger.info("User requesting Home page!");
+   
+    @GetMapping("/login")
+    public String loginPage(Model model) {
+
+        logger.info("User Requesting for Login Page!");
         return "Login";
     }
 
     @PostMapping("/login")
     public String loginUser(@RequestParam String emailId, @RequestParam String password, HttpSession session,
-            RedirectAttributes redirectAttributes) {
+            HttpServletResponse response, RedirectAttributes redirectAttributes) {
 
-        logger.info("Attempting to authenticate user with the mail Id :{}", emailId);
+        logger.info("Attempting to authenticate user with the email ID: {}", emailId);
 
-        boolean isAuthenticated = service.authenticateUser(emailId, password, session);
+        boolean isAuthenticated = service.authenticateUser(emailId, password, session, response);
+
         if (isAuthenticated) {
-
-            logger.info("User authenticated succesfully: {}", emailId);
-
+            logger.info("User authenticated successfully: {}", emailId);
             logger.info("Redirecting user to /users");
             return "redirect:/users";
         } else {
+            logger.warn("Authentication failed for user with Email ID: {}", emailId);
+            logger.info("Redirecting user to /login");
 
-            logger.warn("Authentication failed for user with Email Id:{}", emailId);
-            logger.info("Redirecting user to /");
-
-            redirectAttributes.addFlashAttribute("message", "Invalid Email-Id or password!");
-            return "redirect:/";
+            redirectAttributes.addFlashAttribute("message", "Invalid Email ID or password!");
+            return "redirect:/login";
         }
     }
 
@@ -64,22 +66,10 @@ public class UserController {
     public String showUserPage(@RequestParam(defaultValue = "1") int pageNumber,
             @RequestParam(defaultValue = "10") int pageSize, HttpSession session, Model model) {
 
-        service.prepareUserPage(pageNumber, pageSize, session, model);
-
-        logger.info("Redirecting User to Home page succesfully!");
+        service.prepareUserPage(pageNumber, pageSize, model);
+        logger.info("Directing User to Home page succesfully!");
 
         return "Details";
-    }
-
-    @GetMapping("/logout")
-    public String logout(HttpSession session) {
-
-        logger.info("Invalidating user!!");
-        session.invalidate();
-
-        logger.info("Invalidated session on user logout and redirecting to Login page");
-
-        return "redirect:/";
     }
 
     @GetMapping("/users/viewInfo/{userId}")

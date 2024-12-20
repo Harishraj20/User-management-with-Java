@@ -18,6 +18,7 @@
     <body>
       <div class="card">
         <p class="message-content">${Message}</p>
+        <p class="message-content">${message}</p>
         <p class="message-content">${msg}</p>
 
 

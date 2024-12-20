@@ -1,0 +1,12 @@
+com\task\Security\LogoutHandlerCookie.class
+com\task\Security\JwtAuthenticationFilter.class
+com\task\Repository\UserRepository.class
+com\task\Security\JwtService.class
+com\task\Service\MyUserDetailsService.class
+com\task\Security\SecurityConfig.class
+com\task\Model\UserPrincipal.class
+com\task\Model\User.class
+com\task\Model\Login.class
+com\task\Controller\CrudController.class
+com\task\Service\UserService.class
+com\task\Controller\UserController.class
