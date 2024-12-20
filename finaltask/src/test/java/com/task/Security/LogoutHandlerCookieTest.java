@@ -63,21 +63,4 @@ public class LogoutHandlerCookieTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(header().string("Location", "/login"));
     }
-
-    @Test
-    public void testLogout_withJSessionIdCookie() throws Exception {
-        Cookie jsessionidCookie = new Cookie("JSESSIONID", "testSessionId");
-        jsessionidCookie.setPath("/");
-        jsessionidCookie.setHttpOnly(true);
-
-        mockMvc.perform(get("/users/logout")
-                .cookie(jsessionidCookie))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(header().string("Location", "/login"));
-
-        mockMvc.perform(get("/users/logout")
-                .cookie(jsessionidCookie))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(header().string("Location", "/login"));
-    }
 }

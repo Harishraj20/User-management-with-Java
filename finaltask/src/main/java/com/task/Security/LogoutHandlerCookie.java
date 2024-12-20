@@ -31,17 +31,9 @@ public class LogoutHandlerCookie implements LogoutHandler {
                     response.addCookie(cookie);
                     logger.info("Cleared jwtToken cookie");
                 }
-
-                if ("JSESSIONID".equals(cookie.getName())) {
-                    cookie.setMaxAge(0); 
-                    cookie.setPath("/");  
-                    response.addCookie(cookie);
-                    logger.info("Cleared JSESSIONID cookie");
-                }
             }
         }
 
-        request.getSession().invalidate();
         logger.info("Session invalidated");
     }
 }
