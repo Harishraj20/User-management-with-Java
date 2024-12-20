@@ -1,6 +1,5 @@
 package com.task.Security;
 
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +22,12 @@ public class JwtService {
 
     protected static final Logger logger = LogManager.getLogger();
 
-    private final String secretKey = "292c4ebac02150bc344bd198c8f48e5b5218d23722f717a7fc0bba3e4d807a0337faf994f99e61fda02a20fa551fbe66b9fd8f2e30f8232735f23ff7530bf346c3e447bd4e4db1c50de64f420eaa97822a69ece4c2d5dcd4878d29e9bf10647f2479ffa7a19faab1ac7e4a309da3ee5f5f95f126da1a7f12f00a05b75ff8cabb19c0f868334c5f5c8cf01209864f60dd28138dd68f4bcc9c0549bc784de3061ba1a6fd1cee5d337afabf6a2be205b93352a72dd4e3bde2924618e6bc9be5c9b55ce50331994b949a0a586985d8e9e3882bb294154308d1854ebe3c49aaa31c0fe7023288682fb50c4d2eb01586faa3323daf9a85348bdd1b4ce67c8a5e81583a";
+
+    private static final SecretKey secretKey = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS512);
+
+    public JwtService() {
+        logger.info("Secret key initialized.");
+    }
 
     public String generateToken(String emailId) {
         Map<String, Object> claims = new HashMap<>();
@@ -31,14 +35,9 @@ public class JwtService {
                 .setClaims(claims)
                 .setSubject(emailId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 1))
-                .signWith(getKey())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 1)) // 1 hour validity
+                .signWith(secretKey)
                 .compact();
-    }
-
-    private SecretKey getKey() {
-        byte[] keyBytes = Base64.getDecoder().decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String extractUsername(String token) {
@@ -52,7 +51,7 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getKey())
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -67,20 +66,17 @@ public class JwtService {
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
-
         try {
             final String username = extractUsername(token);
-          
             if (isTokenExpired(token)) {
-              
+                logger.warn("Token has expired.");
                 return false;
             }
-            logger.info("token is valid!");
+            logger.info("Token is valid!");
             return username.equals(userDetails.getUsername());
         } catch (JwtException e) {
-            logger.error("JwtException occured");
+            logger.error("JwtException occurred: {}", e.getMessage());
             return false;
         }
     }
 }
-
