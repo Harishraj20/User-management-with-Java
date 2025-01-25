@@ -1,10 +1,9 @@
 package com.task.Service;
 
-import com.task.Model.UserPrincipal;
-
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -16,13 +15,11 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
@@ -41,6 +38,7 @@ import org.springframework.ui.Model;
 
 import com.task.Model.Login;
 import com.task.Model.User;
+import com.task.Model.UserPrincipal;
 import com.task.Repository.UserRepository;
 import com.task.Security.JwtService;
 
@@ -87,7 +85,7 @@ public class UserServiceTest {
 
         testUser = new User("Arvind Kumar", "Aravind@1", "arvind.kumar@gmail.com",
                 "1992-12-10", "Software Engineer", "Admin", 1, "Male");
-        loginUser = new User("Siva", "siva123", "siva@gmail.com", "1990-01-01", "Developer", "Admin", 1,
+        loginUser = new User("Siva kumar", "siva123", "siva@gmail.com", "1990-01-01", "Developer", "Admin", 1,
                 "Male");
 
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
@@ -433,6 +431,7 @@ public class UserServiceTest {
         verify(userRepository, times(1)).findUser(paramId);
         verify(userRepository, never()).updateUser(any(User.class));
     }
+
     @Test
     public void testUpdateUserPassword_Failure_OldPasswordMismatch() {
         String oldPassword = "incorrectOldPassword";
@@ -490,6 +489,21 @@ public class UserServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Arvind Kumar", result.get(0).getUserName());
+    }
+
+    @Test
+    public void test_searchFeature() {
+        List<User> userList = Arrays.asList(testUser, loginUser);
+        List<User> results = userList.stream()
+        .filter(user -> user.getUserName().toLowerCase().contains("kumar".toLowerCase()))
+        .collect(Collectors.toList());
+
+
+        when(userRepository.searchResults("kumar")).thenReturn(results);
+
+        List<User> usersResult = userService.getBySearch("kumar");
+        System.out.println(usersResult);
+        assertEquals(2, usersResult.size());
     }
 
 }

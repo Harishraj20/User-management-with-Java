@@ -38,7 +38,7 @@ public class MyUserDetailsService implements UserDetailsService {
         logger.info("User found: {}", user.getEmailId());
         logger.info("Fetched user details: {}", user);
 
-        return new UserPrincipal(user);
+        return new UserPrincipal(user); //object of userdetails
     }
 
 }

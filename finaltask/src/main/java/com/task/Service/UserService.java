@@ -64,6 +64,10 @@ public class UserService {
                 session.setAttribute("LoginUser", user);
                 updateCredentials(user);
                 token = jwtService.generateToken(emailId);
+
+                // response.setHeader("access_token", token);
+                // logger.info("Response header 'access_token' set with value: " + response.getHeader("access_token"));
+
                 logger.info("Token Generated on successful Login: {}", token);
 
                 Cookie jwtCookie = new Cookie("jwtToken", token);
@@ -103,8 +107,8 @@ public class UserService {
         model.addAttribute("UserList", paginatedUsers);
         model.addAttribute("currentPage", pageNumber);
         model.addAttribute("totalPages", totalPages);
-        model.addAttribute("loggedInUser",repo.checkUserByEmailid(mailId));
-        logger.info("Retrieved user info from token mail Id: {}",model.getAttribute("loggedInUser"));
+        model.addAttribute("loggedInUser", repo.checkUserByEmailid(mailId));
+        logger.info("Retrieved user info from token mail Id: {}", model.getAttribute("loggedInUser"));
 
         logger.info("User page prepared with total users: {} and total pages: {}", totalUsers, totalPages);
     }
@@ -266,10 +270,5 @@ public class UserService {
     public List<User> getBySearch(String field) {
         logger.info("Requesting service to interact with database");
         return repo.searchResults(field);
-    }
-
-    public User findUser(String emailId) {
-        logger.info("inside find user method to return loggedIn user info!");
-        return repo.checkUserByEmailid(emailId);
     }
 }

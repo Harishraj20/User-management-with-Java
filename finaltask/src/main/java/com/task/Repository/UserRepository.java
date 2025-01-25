@@ -13,6 +13,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -32,7 +33,7 @@ public class UserRepository {
 
     private static final Logger logger = LogManager.getLogger();
 
-    //Repository Method - Add Users
+    // Repository Method - Add Users
     public boolean addUserInfo(User user) {
         try {
             Session session = sessionFactory.getCurrentSession();
@@ -45,10 +46,11 @@ public class UserRepository {
         } catch (Exception e) {
             logger.warn("Exception in adduserInfo Method.....");
             return false;
+            // return false;
         }
     }
 
-    //Check User By Email
+    // Check User By Email
     public User checkUserByEmailid(String emailId) {
         try {
             Session session = sessionFactory.getCurrentSession();
@@ -65,7 +67,7 @@ public class UserRepository {
         }
     }
 
-    //Save Login info 
+    // Save Login info
     public void saveLoginInfo(Login loginInfo) {
         try {
             Session session = sessionFactory.getCurrentSession();
@@ -78,7 +80,7 @@ public class UserRepository {
         }
     }
 
-    //Pagination method for Login Info
+    // Pagination method for Login Info
     public List<Login> getLoginInfo(int userId, int page, int pageSize) {
         try {
             logger.info("Trying to get login Info");
@@ -107,13 +109,21 @@ public class UserRepository {
 
     }
 
-    //Total Login Counts for Pagination
+    // Total Login Counts for Pagination
     public int getTotalLoginCount(int userId) {
         try {
 
             logger.info("Attempting to fetch Login Counts of user with ID:", userId);
 
             Session session = sessionFactory.getCurrentSession();
+
+            // String hql = "SELECT COUNT(L) FROM Login L where l.user.userId= :userId";
+
+            // Query<Long> query = session.createQuery(hql, Long.class);
+            // query.setParameter("userId", userId);
+
+            // Long count = query.uniqueResult();
+
             Criteria criteria = session.createCriteria(Login.class);
             criteria.createAlias("user", "u");
             criteria.add(Restrictions.eq("u.userId", userId));
@@ -128,7 +138,7 @@ public class UserRepository {
         }
     }
 
-    //Delete User method
+    // Delete User method
     public void deleteUser(int userId) {
         try {
             Session session = sessionFactory.getCurrentSession();
@@ -145,7 +155,7 @@ public class UserRepository {
         }
     }
 
-    //Find User By ID
+    // Find User By ID
     public User findUser(int userIdForAction) {
         try {
             Session session = sessionFactory.getCurrentSession();
@@ -161,10 +171,18 @@ public class UserRepository {
         }
     }
 
-    //MailId Validation for Update
+    // MailId Validation for Update
     public User findUserByEmailExcludingId(String emailId, int userId) {
         try {
             Session session = sessionFactory.getCurrentSession();
+
+            // String Hql = "SELECT u from User u WHERE u.emailId = :emailId AND u.userId !=
+            // :userId";
+            // Query<User> user = session.createQuery(Hql,User.class);
+            // user.setParameter("emailId", emailId);
+            // user.setParameter("userId", userId);
+            // return (User) user.uniqueResult();
+
             Criteria criteria = session.createCriteria(User.class)
                     .add(Restrictions.eq("emailId", emailId))
                     .add(Restrictions.ne("userId", userId));
@@ -178,7 +196,7 @@ public class UserRepository {
         }
     }
 
-    //Update Users
+    // Update Users
     public void updateUser(User user) {
         try {
             Session session = sessionFactory.getCurrentSession();
@@ -190,7 +208,7 @@ public class UserRepository {
         }
     }
 
-    //Method to fetch All Users with pagination
+    // Method to fetch All Users with pagination
     public List<User> fetchUsersWithPagination(int offset, int pageSize) {
         try {
             Session session = sessionFactory.getCurrentSession();
@@ -205,7 +223,7 @@ public class UserRepository {
         }
     }
 
-    //Method to count total Users for pagination
+    // Method to count total Users for pagination
     public int countTotalUsers() {
         try {
             Session session = sessionFactory.getCurrentSession();
@@ -221,7 +239,7 @@ public class UserRepository {
         }
     }
 
-    //Fetch List of Inactive Users
+    // Fetch List of Inactive Users
     public List<User> findInactiveUsers(int offset, int pageSize) {
         try {
 
@@ -245,13 +263,18 @@ public class UserRepository {
         }
     }
 
-    //Get inactive user counts
+    // Get inactive user counts
     public int countInactiveUsers() {
         try {
 
+            Session session = sessionFactory.getCurrentSession();
+            // String Hql = "SELECT Count(u) from User u where u.loginStatus = 0";
+            // Query<Long> query = session.createQuery(Hql,Long.class);
+            // Long value = query.uniqueResult();
+            // return value!=null ? value.intValue() : 0;
+
             logger.info("Attempting to get count of inactive users");
 
-            Session session = sessionFactory.getCurrentSession();
             Criteria criteria = session.createCriteria(User.class);
             criteria.add(Restrictions.eq("loginStatus", 0));
             criteria.setProjection(Projections.rowCount());
@@ -272,15 +295,16 @@ public class UserRepository {
     public List<User> searchResults(String val) {
         logger.info("Inside repository search Method");
         try {
-            Session session = sessionFactory.getCurrentSession();
 
+            Session session = sessionFactory.getCurrentSession();
             Criteria criteria = session.createCriteria(User.class);
 
-            criteria.add(Restrictions.ilike("userName", "%" + val + "%"));
-
-            List<User> users = criteria.list();
-
-            return users;
+            criteria.add(Restrictions.or(
+                    Restrictions.ilike("userName", "%" + val + "%"),
+                    Restrictions.ilike("emailId", "%" + val + "%"),
+                    Restrictions.ilike("designation", "%" + val + "%"),
+                    Restrictions.ilike("role", "%" + val + "%")));
+            return criteria.list();
 
         } catch (HibernateException e) {
             logger.error("Hibernate Exception while fetching users for search Field");
